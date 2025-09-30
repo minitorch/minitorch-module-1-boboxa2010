@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from collections import defaultdict
 from typing import Any, Iterable, List, Tuple
 
 from typing_extensions import Protocol
@@ -22,8 +23,10 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     Returns:
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
-    # TODO: Implement for Task 1.1.
-    raise NotImplementedError("Need to implement for Task 1.1")
+
+    lhs = vals[:arg] + (vals[arg] + epsilon,) + vals[arg + 1:]
+    rhs = vals[:arg] + (vals[arg] - epsilon,) + vals[arg + 1:]
+    return (f(*lhs) - f(*rhs)) / (2 * epsilon)
 
 
 variable_count = 1
@@ -61,8 +64,24 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     Returns:
         Non-constant Variables in topological order starting from the right.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    def visit(variable: Variable, color: dict[int, int], result: list[Variable]) -> None:
+        if variable.unique_id in color and color[variable.unique_id] == 2:
+            return
+        if variable.unique_id in color and color[variable.unique_id] == 1:
+            raise ValueError("Graph has at least one cycle")
+        color[variable.unique_id] = 1
+
+        for parent in variable.parents:
+            visit(parent, color, result)
+        color[variable.unique_id] = 2
+        result.append(variable)
+
+    result: list[Variable] = []
+    color: dict[int, int] = {}
+
+    visit(variable, color, result)
+
+    return result
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -76,8 +95,19 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
-    # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    queue = list(topological_sort(variable))
+
+    grads = defaultdict(lambda: 0)
+
+    grads[variable.unique_id] = deriv
+
+    for var in reversed(queue):
+        if var.is_leaf():
+            var.accumulate_derivative(grads[var.unique_id])
+        else:
+            for scalar, devivative in var.chain_rule(grads[var.unique_id]):
+                grads[scalar.unique_id] += devivative
+                    
 
 
 @dataclass

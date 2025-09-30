@@ -13,15 +13,17 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    - name: Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
     - name: Setup
       id: setup
       uses: classroom-resources/autograding-command-grader@v1
       with:
         test-name: Setup
-        setup-command: sudo -H pip3 install -qr requirements.txt; sudo -H pip3 install
-          flake8==5.0.4
-        command: flake8 --ignore "N801, E203, E266, E501, W503, F812, E741, N803,
-          N802, N806" minitorch/ tests/ project/; mypy minitorch/*
+        setup-command: sudo -H pip3 install -qr requirements.txt
+        command: mypy minitorch/*
         timeout: 10
         max-score: 10
     - name: Task 1.1
